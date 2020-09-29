@@ -29,5 +29,17 @@ app.get('/getauthorizationurl', (request, response) => {
     return response.send(authorizationUrl);
 });
 
+app.post('/getaccesstoken', (request, response) => {
+    code = request.body.code;
+    if (code == null) return response.status(400).send('Request is Invalid');
+    client.getToken(code, (error, acessToken) => {
+        if (error) {
+            console.error('Error. Access Token cannot be Retreived.', error);
+            return response.status(400).send('Error. Access Token cannot be Retreived.');
+        }
+        response.send(acessToken);
+    });
+});
+
 const PORT = process.env.PORT || 7000;
 app.listen(PORT, () => console.log(`Server has Started ${PORT}`));
