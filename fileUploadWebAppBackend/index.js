@@ -24,6 +24,40 @@ application.use(cors());
 application.use(bodyParser.urlencoded({ extended: false }));
 application.use(bodyParser.json());
 
+application.post("/uploadfile", (request, response) => {
+  let formData = new formidable.IncomingForm();
+  formData.parse(request, (error, flds, fls) => {
+    if (error) return response.status(400).send(error);
+    const accessToken = JSON.parse(flds.token);
+    if (accessToken == null)
+      return response.status(400).send("Cannot Find the Token");
+    client.setCredentials(accessToken);
+    const googleDrive = google.drive({ version: "v3", auth: client });
+    const metadata = {
+      name: fls.file.name,
+    };
+    const media = {
+      mimeType: fls.file.type,
+      body: fs.createReadStream(fls.file.path),
+    };
+    googleDrive.files.create(
+      {
+        resource: metadata,
+        media: media,
+        fields: "id",
+      },
+      (error, fls) => {
+        client.setCredentials(null);
+        if (error) {
+          response.status(400).send(error);
+        } else {
+          response.send("File Upload Successful");
+        }
+      }
+    );
+  });
+});
+
 application.post("/accessdrive", (request, response) => {
   token = request.body.token;
   if (token == null) return response.status(400).send("Cannot Find the Token");
@@ -65,12 +99,12 @@ application.post("/retrieveacconutinfo", (request, response) => {
   });
 });
 
-application.post('/retrieveacconutinfo', (request, response) => {
-    token = request.body.token;
-    if (token == null) return response.status(400).send('Cannot Find the Token');
-    client.setCredentials(token);
+application.post("/retrieveacconutinfo", (request, response) => {
+  token = request.body.token;
+  if (token == null) return response.status(400).send("Cannot Find the Token");
+  client.setCredentials(token);
 
-    retiveAccountInfo().then(accountInfoData => response.send(accountInfoData));
+  retiveAccountInfo().then((accountInfoData) => response.send(accountInfoData));
 });
 
 /* TO DO: Break the fucntion into 2
