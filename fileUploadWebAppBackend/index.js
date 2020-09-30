@@ -139,7 +139,6 @@ application.get("/getauthorizationurl", (request, response) => {
     access_type: "offline",
     scope: SCOPE,
   });
-  console.log(authorizationUrl);
   return response.send(authorizationUrl);
 });
 
