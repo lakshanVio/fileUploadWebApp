@@ -24,39 +24,66 @@ application.use(cors());
 application.use(bodyParser.urlencoded({ extended: false }));
 application.use(bodyParser.json());
 
+application.post("/accessdrive", (request, response) => {
+  token = request.body.token;
+  if (token == null) return response.status(400).send("Cannot Find the Token");
+  client.setCredentials(token);
+  const googleDrive = google.drive({ version: "v3", auth: client });
+  googleDrive.files.list(
+    {
+      pageSize: 7,
+    },
+    (error, res) => {
+      if (error) {
+        console.log("Error: " + error);
+        return response.status(400).send(error);
+      }
+      const drivefiles = res.data.files;
+      if (drivefiles.length) {
+        console.log("Google Drive Files:");
+        drivefiles.map((file) => {
+          console.log(`${file.name} (${file.id})`);
+        });
+      } else {
+        console.log("There are no file.");
+      }
+      response.send(drivefiles);
+    }
+  );
+});
+
 application.post("/retrieveacconutinfo", (request, response) => {
   token = request.body.token;
   if (token == null) return response.status(400).send("Cannot Find the Token");
   client.setCredentials(token);
-  const oauth = google.oauth2({ version: "v2", auth: client });
 
+  const oauth = google.oauth2({ version: "v2", auth: client });
   oauth.userinfo.get((error, res) => {
     if (error) response.status(400).send(error);
     console.log(res.data);
-    res.send(res.data);
+    response.send(res.data);
   });
 });
 
-/*
 application.post('/retrieveacconutinfo', (request, response) => {
     token = request.body.token;
     if (token == null) return response.status(400).send('Cannot Find the Token');
     client.setCredentials(token);
 
-    accountInfoData = retiveAccountInfo();
-    response.send(accountInfoData);
+    retiveAccountInfo().then(accountInfoData => response.send(accountInfoData));
 });
 
-
-function retiveAccountInfo() {
+/* TO DO: Break the fucntion into 2
+async function retiveAccountInfo() {
     const oauth = google.oauth2({ version: 'v2', auth: client });
-    oauth.userinfo.get((error, response) => {
+    const result = oauth.userinfo.get(async (error, response) => {
         if (error) response.status(400).send(error);
         console.log(response.data);
-        return response.data;
+        result = await response.data; 
     })
+    return result;
   }
-*/
+
 
 application.post("/getaccesstoken", (request, response) => {
   code = request.body.code;
@@ -71,6 +98,7 @@ application.post("/getaccesstoken", (request, response) => {
     response.send(acessToken);
   });
 });
+*/
 
 application.get("/getauthorizationurl", (request, response) => {
   const authorizationUrl = client.generateAuthUrl({
