@@ -1,7 +1,7 @@
 const express = require("express");
 const application = express();
 const bodyParser = require("body-parser");
-const cors = require("cors");
+var cors = require('cors');
 const { google } = require("googleapis");
 const fs = require("fs");
 const formidable = require("formidable");
@@ -20,7 +20,7 @@ const SCOPE = [
   "https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file",
 ];
 
-application.use(cors());
+application.use(cors({origin: '*'}));
 application.use(bodyParser.urlencoded({ extended: false }));
 application.use(bodyParser.json());
 
@@ -99,26 +99,6 @@ application.post("/retrieveacconutinfo", (request, response) => {
   });
 });
 
-application.post("/retrieveacconutinfo", (request, response) => {
-  token = request.body.token;
-  if (token == null) return response.status(400).send("Cannot Find the Token");
-  client.setCredentials(token);
-
-  retiveAccountInfo().then((accountInfoData) => response.send(accountInfoData));
-});
-
-/* TO DO: Break the fucntion into 2
-async function retiveAccountInfo() {
-    const oauth = google.oauth2({ version: 'v2', auth: client });
-    const result = oauth.userinfo.get(async (error, response) => {
-        if (error) response.status(400).send(error);
-        console.log(response.data);
-        result = await response.data; 
-    })
-    return result;
-  }
-
-
 application.post("/getaccesstoken", (request, response) => {
   code = request.body.code;
   if (code == null) return response.status(400).send("Request is Invalid");
@@ -132,18 +112,17 @@ application.post("/getaccesstoken", (request, response) => {
     response.send(acessToken);
   });
 });
-*/
 
 application.get("/getauthorizationurl", (request, response) => {
   const authorizationUrl = client.generateAuthUrl({
     access_type: "offline",
     scope: SCOPE,
   });
-  return response.send(authorizationUrl);
+  return response.send({"authurl": authorizationUrl});
 });
 
-application.get("/", (req, res) =>
-  res.send("Sri file upload backend runnning")
+application.get("/", (request, response) =>
+  response.send("Sri file upload backend runnning")
 );
 
 const PORT = process.env.PORT || 7000;
