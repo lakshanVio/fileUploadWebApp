@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import queryString from "query-string";
 import axios from "axios";
+import FileView from "./FileView";
 
 export default class Upload extends Component {
   constructor(props) {
@@ -9,6 +10,7 @@ export default class Upload extends Component {
       code: "",
       scope: "",
       accessToken: "",
+      driveFiles: [],
     };
     this.requestAccessToken = this.requestAccessToken.bind(this);
     this.requestAccessDrive = this.requestAccessDrive.bind(this);
@@ -52,15 +54,44 @@ export default class Upload extends Component {
     const requestBody = { token: this.state.accessToken };
     axios
       .post("http://localhost:7000/accessdrive", requestBody)
-      .then(function (data) {
-        console.log(data);
+      .then((data) => {
+        this.setState({
+          driveFiles: data.data,
+        });
       });
   }
 
   render() {
+    const files = this.state.driveFiles;
+    const fileList = files.map((data, index) => {
+      return (
+        <FileView
+          fileId={data.id}
+          fileName={data.name}
+          fileType={data.mimeType}
+        />
+      );
+    });
     return (
       <div>
-        <p>Upload Files</p>
+        <div className="row">
+          <div className="col-lg-8">
+            <h5 style={{ marginLeft: "1rem" }}>Your Goole Drive Files</h5>
+          </div>
+          <div className="col-lg-4">
+            <h5 style={{ marginLeft: "1rem" }}>Your Goole Drive Files</h5>
+          </div>
+        </div>
+
+        <table className="table table-striped" style={{ marginTop: 20 }}>
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>File Type</th>
+            </tr>
+          </thead>
+          <tbody>{fileList}</tbody>
+        </table>
       </div>
     );
   }
