@@ -1,7 +1,7 @@
 const express = require("express");
 const application = express();
 const bodyParser = require("body-parser");
-var cors = require('cors');
+var cors = require("cors");
 const { google } = require("googleapis");
 const fs = require("fs");
 const formidable = require("formidable");
@@ -20,38 +20,39 @@ const SCOPE = [
   "https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file",
 ];
 
-application.use(cors({origin: '*'}));
+application.use(cors({ origin: "*" }));
 application.use(bodyParser.urlencoded({ extended: false }));
 application.use(bodyParser.json());
 
 application.post("/uploadfile", (request, response) => {
   let formData = new formidable.IncomingForm();
-  formData.parse(request, (error, flds, fls) => {
-    if (error) return response.status(400).send(error);
-    const accessToken = JSON.parse(flds.token);
-    if (accessToken == null)
-      return response.status(400).send("Cannot Find the Token");
-    client.setCredentials(accessToken);
-    const googleDrive = google.drive({ version: "v3", auth: client });
-    const metadata = {
-      name: fls.file.name,
+  formData.parse(request, (err, fields, files) => {
+    if (err) return response.status(400).send(err);
+    const token = JSON.parse(fields.token);
+    if (token == null) return response.status(400).send("Token not found");
+    client.setCredentials(token);
+    console.log(files.file);
+    const drive = google.drive({ version: "v3", auth: client });
+    const fileMetadata = {
+      name: files.file.name,
     };
     const media = {
-      mimeType: fls.file.type,
-      body: fs.createReadStream(fls.file.path),
+      mimeType: files.file.type,
+      body: fs.createReadStream(files.file.path),
     };
-    googleDrive.files.create(
+    drive.files.create(
       {
-        resource: metadata,
+        resource: fileMetadata,
         media: media,
         fields: "id",
       },
-      (error, fls) => {
+      (err, file) => {
         client.setCredentials(null);
-        if (error) {
-          response.status(400).send(error);
+        if (err) {
+          console.error(err);
+          response.status(400).send(err);
         } else {
-          response.send("File Upload Successful");
+          response.send("Successful");
         }
       }
     );
@@ -86,21 +87,9 @@ application.post("/accessdrive", (request, response) => {
   );
 });
 
-application.post("/retrieveacconutinfo", (request, response) => {
-  token = request.body.token;
-  if (token == null) return response.status(400).send("Cannot Find the Token");
-  client.setCredentials(token);
-
-  const oauth = google.oauth2({ version: "v2", auth: client });
-  oauth.userinfo.get((error, res) => {
-    if (error) response.status(400).send(error);
-    console.log(res.data);
-    response.send(res.data);
-  });
-});
-
 application.post("/getaccesstoken", (request, response) => {
-  code = request.body.code;
+  const code = request.body.code;
+  console.log("sending code", request.body);
   if (code == null) return response.status(400).send("Request is Invalid");
   client.getToken(code, (error, acessToken) => {
     if (error) {
@@ -118,7 +107,7 @@ application.get("/getauthorizationurl", (request, response) => {
     access_type: "offline",
     scope: SCOPE,
   });
-  return response.send({"authurl": authorizationUrl});
+  return response.send({ authurl: authorizationUrl });
 });
 
 application.get("/", (request, response) =>

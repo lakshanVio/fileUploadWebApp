@@ -11,9 +11,12 @@ export default class Upload extends Component {
       scope: "",
       accessToken: "",
       driveFiles: [],
+      file: null,
     };
     this.requestAccessToken = this.requestAccessToken.bind(this);
     this.requestAccessDrive = this.requestAccessDrive.bind(this);
+    this.handleClickUploadFiles = this.handleClickUploadFiles.bind(this);
+    this.onFileSelect = this.onFileSelect.bind(this);
   }
 
   componentDidMount() {
@@ -27,20 +30,24 @@ export default class Upload extends Component {
     );
   }
 
+  componentDidUpdate(){
+    if(this.state.accessToken != null){
+      this.requestAccessDrive();
+    }
+  }
+
   requestAccessToken() {
     const requestBody = { code: this.state.code };
     axios
       .post("http://localhost:7000/getaccesstoken", requestBody)
       .then((data) => {
         if (data != null) {
-          console.log("data:", data);
           this.setState(
             {
               accessToken: data.data,
             },
             () => this.requestAccessDrive()
           );
-          console.log("outside", data);
         } else {
           alert("access token not found");
         }
@@ -61,6 +68,40 @@ export default class Upload extends Component {
       });
   }
 
+  onFileSelect(event) {
+    this.setState(
+      {
+        file: event.target.files[0],
+      },
+      () => console.log("on file select", this.state.file)
+    );
+  }
+
+  handleClickUploadFiles(event) {
+    event.preventDefault();
+
+    const formData = new FormData();
+
+    formData.append("file", this.state.file, this.state.file.name);
+
+    formData.append("token", JSON.stringify(this.state.accessToken));
+
+    if (this.state.file != null && this.state.accessToken != null) {
+      axios({
+        method: "post",
+        url: "http://localhost:7000/uploadfile",
+        data: formData,
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+        .then(function () {
+          alert("File upload sucessfull");
+        })
+        .catch(function (error) {
+          alert("File upload unsucessfull", error);
+        });
+    }
+  }
+
   render() {
     const files = this.state.driveFiles;
     const fileList = files.map((data, index) => {
@@ -76,10 +117,23 @@ export default class Upload extends Component {
       <div>
         <div className="row">
           <div className="col-lg-8">
-            <h5 style={{ marginLeft: "1rem" }}>Your Goole Drive Files</h5>
+            <h5 style={{ margin: "60px 0 0 1rem" }}>Your Goole Drive Files</h5>
           </div>
           <div className="col-lg-4">
-            <h5 style={{ marginLeft: "1rem" }}>Your Goole Drive Files</h5>
+            <input
+              className="google btn"
+              style={{ width: "85%", margin: "20px 15px 10px 15px" }}
+              type="file"
+              onChange={this.onFileSelect}
+            />
+            <button
+              className="google btn"
+              style={{ width: "85%", margin: "0 15px 0 15px" }}
+              onClick={this.handleClickUploadFiles}
+            >
+              <i className="fa fa-google fa-fw"></i> Upload Files To Google
+              Drive
+            </button>
           </div>
         </div>
 

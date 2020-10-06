@@ -29,7 +29,7 @@ export default class SignIn extends Component {
             </div>
             <div className="row raw-margin">
               <p style={{ textAlign: "center" }}>
-                To upload files first Sign-In with your google account
+                To upload files first Sign-In with your google account.
               </p>
             </div>
             <div className="row raw-margin">
